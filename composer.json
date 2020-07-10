@@ -1,0 +1,37 @@
+{
+    "name": "dudlsack/mailjet-mailer",
+    "type": "symfony-bridge",
+    "description": "Symfony Mailjet Mailer Bridge",
+    "keywords": [],
+    "homepage": "https://github.com/dudlsack/mailjet-mailer",
+    "license": "MIT",
+    "authors": [
+        {
+          "name": "Patrick Schmitz",
+          "email": "patrick.schmitz@mail.de"
+        }
+    ],
+    "require": {
+        "php": "^7.4",
+        "symfony/mailer": "4.4.*"
+    },
+    "require-dev": {
+        "symfony/http-client": "4.4.*",
+        "phpunit/phpunit": "9.2.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Duldsack\\Component\\Mailer\\Bridge\\Mailjet\\": ""
+        },
+        "exclude-from-classmap": [
+            "/Tests/"
+        ]
+    },
+    "minimum-stability": "dev",
+    "extra": {
+        "symfony": {
+            "allow-contrib": false,
+            "require": "4.4.*"
+        }
+    }
+}
