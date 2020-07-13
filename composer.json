@@ -13,10 +13,10 @@
     ],
     "require": {
         "php": "^7.4",
+        "symfony/http-client": "4.4.*",
         "symfony/mailer": "4.4.*"
     },
     "require-dev": {
-        "symfony/http-client": "4.4.*",
         "phpunit/phpunit": "9.2.*"
     },
     "autoload": {
