@@ -21,28 +21,21 @@ use function strpos;
 
 class MailjetApiTransport extends AbstractApiTransport
 {
+    private const HOST = 'api.mailjet.com';
+
     /**
      * @var string[]
      */
     private array $key;
 
-    private string $mailjetUri;
-
-    private ?string $mailjetHost;
-
     public function __construct(
         string $key,
-        string $mailjetUri,
-        ?string $mailjetHost = null,
         ?HttpClientInterface $client = null,
         ?EventDispatcherInterface $dispatcher = null,
         ?LoggerInterface $logger = null
     ) {
         $this->assertKeyIsValid($key);
-
         $this->key = explode(':', $key);
-        $this->mailjetUri = $mailjetUri;
-        $this->mailjetHost = $mailjetHost;
 
         parent::__construct($client, $dispatcher, $logger);
     }
@@ -54,7 +47,7 @@ class MailjetApiTransport extends AbstractApiTransport
 
     protected function doSendApi(SentMessage $sentMessage, Email $email, Envelope $envelope): ResponseInterface
     {
-        $url = sprintf('https://%s%s', $this->getHostUrl(), $this->mailjetUri);
+        $url = sprintf('https://%s/v3.1/send', $this->getHostUrl());
         $options = $this->createOptions($email, $envelope);
 
         $response = $this->client->request('POST', $url, $options);
@@ -106,7 +99,7 @@ class MailjetApiTransport extends AbstractApiTransport
 
     private function getHostUrl(): string
     {
-        return ($this->host ?: $this->mailjetHost).($this->port ? ':'.$this->port : '');
+        return ($this->host ?: self::HOST).($this->port ? ':'.$this->port : '');
     }
 
     /**
