@@ -29,19 +29,19 @@ class MailjetApiTransportTest extends TestCase
     {
         return [
             [
-                new MailjetApiTransport('public:private', '/v3.1/send', 'api.mailjet.com'),
+                new MailjetApiTransport('public:private'),
                 'mailjet+api://api.mailjet.com',
             ],
             [
-                (new MailjetApiTransport('public:private', '/v3.1/send'))->setHost('test.com'),
+                (new MailjetApiTransport('public:private'))->setHost('test.com'),
                 'mailjet+api://test.com',
             ],
             [
-                (new MailjetApiTransport('public:private', '/v3.1/send', 'api.mailjet.com'))->setHost('test.com'),
+                (new MailjetApiTransport('public:private'))->setHost('test.com'),
                 'mailjet+api://test.com',
             ],
             [
-                (new MailjetApiTransport('public:private', '/v3.1/send', 'api.mailjet.com'))->setHost('test.com')->setPort(99),
+                (new MailjetApiTransport('public:private'))->setHost('test.com')->setPort(99),
                 'mailjet+api://test.com:99',
             ],
         ];
@@ -89,7 +89,7 @@ class MailjetApiTransportTest extends TestCase
             return new MockResponse('', ['http_code' => 200]);
         });
 
-        $transport = new MailjetApiTransport('public:private', '/v3.1/send', 'api.mailjet.com', $client);
+        $transport = new MailjetApiTransport('public:private', $client);
 
         $mail = new Email();
         $mail->subject('Hello!')
@@ -108,7 +108,7 @@ class MailjetApiTransportTest extends TestCase
             ]);
         });
 
-        $transport = new MailjetApiTransport('public:private', '/v3.1/send', 'api.mailjet.com', $client);
+        $transport = new MailjetApiTransport('public:private', $client);
 
         $mail = new Email();
         $mail->subject('Hello!')
