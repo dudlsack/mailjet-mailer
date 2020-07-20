@@ -14,9 +14,11 @@ use Symfony\Component\Mime\Email;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
+use function count;
 use function explode;
 use function in_array;
-use function sprintf;
+use function Safe\json_encode;
+use function Safe\sprintf;
 use function strpos;
 
 class MailjetApiTransport extends AbstractApiTransport
@@ -58,11 +60,11 @@ class MailjetApiTransport extends AbstractApiTransport
 
         $result = $response->toArray(false);
 
-        if ($this->hasErrorMessage($result)) {
-            throw new HttpTransportException(sprintf('Unable to send an email: %s (code %s).', $result['message'], $result['code']), $response);
+        if (!$this->hasDetailedErrorMessage($result)) {
+            throw new HttpTransportException('Unable to send an email due to unknown error.', $response);
         }
 
-        throw new HttpTransportException(sprintf('Unable to send an email (code %s).', $result['code']), $response);
+        throw new HttpTransportException(sprintf('Unable to send an email: %s.', $this->resolveErrorMessage($result)), $response);
     }
 
     /**
@@ -152,11 +154,26 @@ class MailjetApiTransport extends AbstractApiTransport
     /**
      * @param mixed[]
      */
-    private function hasErrorMessage(array $result): bool
+    private function hasDetailedErrorMessage(array $result): bool
     {
-        $status = $result['status'] ?? false;
+        $status = $result['Messages']['Status'] ?? false;
+        $errorMessage = $this->resolveErrorMessage($result);
 
-        return $status === 'error';
+        return $status === 'error' && $errorMessage !== null;
+    }
+
+    /**
+     * @param mixed[] $result
+     */
+    private function resolveErrorMessage(array $result): ?string
+    {
+        $errors = $result['Messages']['Errors'] ?? null;
+
+        if (!is_array($errors) || count($errors) === 0) {
+            return null;
+        }
+
+        return json_encode($errors);
     }
 }
 
