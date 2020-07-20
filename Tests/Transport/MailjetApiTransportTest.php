@@ -13,7 +13,8 @@ use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 use function current;
-use function json_decode;
+use function Safe\json_decode;
+use function Safe\json_encode;
 
 class MailjetApiTransportTest extends TestCase
 {
@@ -100,7 +101,7 @@ class MailjetApiTransportTest extends TestCase
         $transport->send($mail);
     }
 
-    public function testSendThrowsDetailedExceptionForErrorResponse()
+    public function testSendThrowsExceptionForErrorResponse()
     {
         $client = new MockHttpClient(function (string $method, string $url, array $options): ResponseInterface {
             $body = json_encode(
@@ -135,37 +136,6 @@ class MailjetApiTransportTest extends TestCase
 
         $this->expectException(HttpTransportException::class);
         $this->expectExceptionMessage('Unable to send an email:');
-
-        $transport->send($mail);
-    }
-
-    public function testSendThrowsUnknownExceptionForErrorResponse()
-    {
-        $client = new MockHttpClient(function (string $method, string $url, array $options): ResponseInterface {
-            $body = json_encode(
-                [
-                    'Messages' => [
-                        'Status' => 'error',
-                        'Errors' => [],
-                    ],
-                ]
-            );
-
-            return new MockResponse($body, [
-                'http_code' => 400,
-            ]);
-        });
-
-        $transport = new MailjetApiTransport('public:private', $client);
-
-        $mail = new Email();
-        $mail->subject('Hello!')
-            ->to(new Address('receiver@test.com', 'Receiver'))
-            ->from(new Address('sender@test.com', 'Sender'))
-            ->text('Hello There!');
-
-        $this->expectException(HttpTransportException::class);
-        $this->expectExceptionMessage('Unable to send an email due to unknown error.');
 
         $transport->send($mail);
     }

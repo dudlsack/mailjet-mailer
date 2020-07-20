@@ -14,10 +14,8 @@ use Symfony\Component\Mime\Email;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
-use function count;
 use function explode;
 use function in_array;
-use function Safe\json_encode;
 use function Safe\sprintf;
 use function strpos;
 
@@ -58,13 +56,7 @@ class MailjetApiTransport extends AbstractApiTransport
             return $response;
         }
 
-        $result = $response->toArray(false);
-
-        if (!$this->hasDetailedErrorMessage($result)) {
-            throw new HttpTransportException('Unable to send an email due to unknown error.', $response);
-        }
-
-        throw new HttpTransportException(sprintf('Unable to send an email: %s.', $this->resolveErrorMessage($result)), $response);
+        throw new HttpTransportException(sprintf('Unable to send an email: %s.', $response->getContent(false)), $response);
     }
 
     /**
@@ -149,31 +141,6 @@ class MailjetApiTransport extends AbstractApiTransport
     private function isSuccessful(ResponseInterface $response): bool
     {
         return $response->getStatusCode() >= 200 && $response->getStatusCode() < 400;
-    }
-
-    /**
-     * @param mixed[]
-     */
-    private function hasDetailedErrorMessage(array $result): bool
-    {
-        $status = $result['Messages']['Status'] ?? false;
-        $errorMessage = $this->resolveErrorMessage($result);
-
-        return $status === 'error' && $errorMessage !== null;
-    }
-
-    /**
-     * @param mixed[] $result
-     */
-    private function resolveErrorMessage(array $result): ?string
-    {
-        $errors = $result['Messages']['Errors'] ?? null;
-
-        if (!is_array($errors) || count($errors) === 0) {
-            return null;
-        }
-
-        return json_encode($errors);
     }
 }
 
