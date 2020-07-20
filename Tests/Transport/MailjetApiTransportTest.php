@@ -100,11 +100,28 @@ class MailjetApiTransportTest extends TestCase
         $transport->send($mail);
     }
 
-    public function testSendThrowsForErrorResponse()
+    public function testSendThrowsDetailedExceptionForErrorResponse()
     {
         $client = new MockHttpClient(function (string $method, string $url, array $options): ResponseInterface {
-            return new MockResponse(json_encode(['status' => 'error', 'message' => 'i\'m a teapot', 'code' => 418]), [
-                'http_code' => 418,
+            $body = json_encode(
+                [
+                    'Messages' => [
+                        'Status' => 'error',
+                        'Errors' => [
+                            [
+                                'ErrorIdentifier' => 'f987008f-251a-4dff-8ffc-40f1583ad7bc',
+                                'ErrorCode' => 'mj-0004',
+                                'StatusCode' => 400,
+                                'ErrorMessage' => 'Type mismatch. Expected type \"array of emails\".',
+                                'ErrorRelatedTo' => ["HTMLPart", "TemplateID"],
+                            ],
+                        ],
+                    ],
+                ]
+            );
+
+            return new MockResponse($body, [
+                'http_code' => 400,
             ]);
         });
 
@@ -117,7 +134,38 @@ class MailjetApiTransportTest extends TestCase
             ->text('Hello There!');
 
         $this->expectException(HttpTransportException::class);
-        $this->expectExceptionMessage('Unable to send an email: i\'m a teapot (code 418).');
+        $this->expectExceptionMessage('Unable to send an email:');
+
+        $transport->send($mail);
+    }
+
+    public function testSendThrowsUnknownExceptionForErrorResponse()
+    {
+        $client = new MockHttpClient(function (string $method, string $url, array $options): ResponseInterface {
+            $body = json_encode(
+                [
+                    'Messages' => [
+                        'Status' => 'error',
+                        'Errors' => [],
+                    ],
+                ]
+            );
+
+            return new MockResponse($body, [
+                'http_code' => 400,
+            ]);
+        });
+
+        $transport = new MailjetApiTransport('public:private', $client);
+
+        $mail = new Email();
+        $mail->subject('Hello!')
+            ->to(new Address('receiver@test.com', 'Receiver'))
+            ->from(new Address('sender@test.com', 'Sender'))
+            ->text('Hello There!');
+
+        $this->expectException(HttpTransportException::class);
+        $this->expectExceptionMessage('Unable to send an email due to unknown error.');
 
         $transport->send($mail);
     }
